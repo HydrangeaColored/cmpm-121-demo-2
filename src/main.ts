@@ -19,5 +19,7 @@ canvas.width = canvasWidth;
 canvas.id = "canvas";
 const ctx = canvas.getContext("2d")!;
 ctx.fillStyle = "#FFE5B4";
-ctx.fillRect(0, 0, canvas.height, canvas.width);
+const canvasPosX = 0;
+const canvasPosY = 0;
+ctx.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
 app.append(canvas);
