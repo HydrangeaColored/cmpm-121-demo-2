@@ -32,6 +32,7 @@ const cursor = {
   y: 0,
 };
 
+// redrawing lines event
 const redrawLines = new Event("drawing-changed");
 canvas.addEventListener("drawing-changed", () => {
   redrawCanvas();
