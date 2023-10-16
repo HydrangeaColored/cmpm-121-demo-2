@@ -64,11 +64,6 @@ canvas.addEventListener("mousedown", (mouseData) => {
   cursor.active = true;
   cursor.x = mouseData.offsetX;
   cursor.y = mouseData.offsetY;
-  drawingLine = [];
-  finishedLines.push(drawingLine);
-  drawingLine.push({ x: cursor.x, y: cursor.y });
-  canvas.dispatchEvent(redrawLines);
-  //undoneLines = [];
 });
 
 canvas.addEventListener("mousemove", (mouseData) => {
@@ -113,7 +108,6 @@ clearCanvas.addEventListener("click", () => {
   finishedLines = [];
   canvas.dispatchEvent(redrawLines);
   context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
-  //undoneLines = [];
 });
 
 /*
