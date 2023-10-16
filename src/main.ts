@@ -58,7 +58,7 @@ function redrawCanvas() {
 
 let finishedLines: { x: number; y: number }[][] = [];
 let drawingLine: { x: number; y: number }[] | null = [];
-//let undoneLines: { x: number; y: number }[][] = [];
+let undoneLines: { x: number; y: number }[][] = [];
 
 canvas.addEventListener("mousedown", (mouseData) => {
   // mouse is active and start point of new line
@@ -69,7 +69,7 @@ canvas.addEventListener("mousedown", (mouseData) => {
   finishedLines.push(drawingLine);
   drawingLine.push({ x: cursor.x, y: cursor.y });
   canvas.dispatchEvent(redrawLines);
-  //undoneLines = [];
+  undoneLines = [];
 });
 
 canvas.addEventListener("mousemove", (mouseData) => {
@@ -114,10 +114,9 @@ clearCanvas.addEventListener("click", () => {
   finishedLines = [];
   canvas.dispatchEvent(redrawLines);
   context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
-  //undoneLines = [];
+  undoneLines = [];
 });
 
-/*
 // undo button
 const undoCanvas = document.createElement("button");
 undoCanvas.innerHTML = "undo";
@@ -145,4 +144,3 @@ redoCanvas.addEventListener("click", () => {
     //context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
   }
 });
-*/
