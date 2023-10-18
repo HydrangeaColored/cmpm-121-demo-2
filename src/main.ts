@@ -253,11 +253,14 @@ app.append(undoCanvas);
 undoCanvas.addEventListener("click", () => {
   // clear context and redraw background color
   if (undoReminder.length) {
-    if (undoReminder[undoReminder.length - 1] == 1) {
+    const finalElementArrayIncrement = 1;
+    const isLine = 1;
+    const isSticker = 2;
+    if (undoReminder[undoReminder.length - finalElementArrayIncrement] == isLine) {
       if (drawingLine.length) {
         undoneLines.push(drawingLine.pop()!);
       }
-    } else if (undoReminder[undoReminder.length - 1] == 2) {
+    } else if (undoReminder[undoReminder.length - finalElementArrayIncrement] == isSticker) {
       if (drawingStickers.length) {
         undoneStickers.push(drawingStickers.pop()!);
         canvas.dispatchEvent(stickerChange);
@@ -275,11 +278,14 @@ app.append(redoCanvas);
 redoCanvas.addEventListener("click", () => {
   // clear context and redraw background color
   if (redoReminder.length) {
-    if (redoReminder[redoReminder.length - 1] == 1) {
+    const finalElementArrayIncrement = 1;
+    const isLine = 1;
+    const isSticker = 2;
+    if (redoReminder[redoReminder.length - finalElementArrayIncrement] == isLine) {
       if (undoneLines.length) {
         drawingLine.push(undoneLines.pop()!);
       }
-    } else if (redoReminder[redoReminder.length - 1] == 2) {
+    } else if (redoReminder[redoReminder.length - finalElementArrayIncrement] == isSticker) {
       if (undoneStickers.length) {
         drawingStickers.push(undoneStickers.pop()!);
       }
