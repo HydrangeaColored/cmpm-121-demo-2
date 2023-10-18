@@ -25,6 +25,7 @@ context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
 app.append(canvas);
 const thinMarkerWidth = 1;
 const thickMarkerWidth = 5;
+canvas.style.cursor = "none";
 
 // geo info objs
 class LineCommand {
@@ -52,6 +53,38 @@ class LineCommand {
     this.pointsInLine.push({ x, y });
   }
 }
+
+class CursorCommand {
+  currPos: { x: number; y: number };
+  constructor(currX: number, currY: number) {
+    this.currPos = { x: currX, y: currY };
+  }
+  draw(context: CanvasRenderingContext2D) {
+    context.fillStyle = "#000000";
+    let cursorXCorrection = 0;
+    let cursorYCorrection = 0;
+    if (currentMarkerWidth == thinMarkerWidth) {
+      context.font = "16px monospace";
+      const cursorXAdjustment = -4;
+      const cursorYAdjustment = 8;
+      cursorXCorrection = cursorXAdjustment;
+      cursorYCorrection = cursorYAdjustment;
+    } else {
+      context.font = "32px monospace";
+      const cursorXAdjustment = -8;
+      const cursorYAdjustment = 16;
+      cursorXCorrection = cursorXAdjustment;
+      cursorYCorrection = cursorYAdjustment;
+    }
+    context.fillText(
+      "*",
+      this.currPos.x + cursorXCorrection,
+      this.currPos.y + cursorYCorrection,
+    );
+    context.fillStyle = "#FFE5B4";
+  }
+}
+
 // drawing
 // source: https://glitch.com/edit/#!/shoddy-paint
 const cursor = {
@@ -66,17 +99,27 @@ canvas.addEventListener("drawing-changed", () => {
   redrawCanvas();
 });
 
+// cursor event
+const mouseChange = new Event("tool-moved");
+canvas.addEventListener("tool-moved", () => {
+  redrawCanvas();
+});
+
 function redrawCanvas() {
   context.clearRect(canvasPosX, canvasPosY, canvas.width, canvas.height);
   context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
   for (const currLine of drawingLine) {
     currLine.display(context);
   }
+  if (cursorChange) {
+    cursorChange.draw(context);
+  }
 }
 
 let drawingLine: LineCommand[] = [];
 let undoneLines: LineCommand[] = [];
 let currentMarkerWidth = thinMarkerWidth;
+let cursorChange: CursorCommand | null = null;
 
 canvas.addEventListener("mousedown", (mouseData) => {
   // mouse is active and start point of new line
@@ -90,6 +133,8 @@ canvas.addEventListener("mousedown", (mouseData) => {
 });
 
 canvas.addEventListener("mousemove", (mouseData) => {
+  cursorChange = new CursorCommand(mouseData.offsetX, mouseData.offsetY);
+  canvas.dispatchEvent(mouseChange);
   // draw path from start to current
   if (cursor.active) {
     cursor.x = mouseData.offsetX;
@@ -107,8 +152,15 @@ canvas.addEventListener("mouseup", () => {
   canvas.dispatchEvent(redrawLines);
 });
 
+canvas.addEventListener("mouseenter", (mouseData) => {
+  cursorChange = new CursorCommand(mouseData.offsetX, mouseData.offsetY);
+  canvas.dispatchEvent(mouseChange);
+});
+
 // fix for leave canvas while drawing bug
 canvas.addEventListener("mouseleave", () => {
+  cursorChange = null;
+  canvas.dispatchEvent(mouseChange);
   cursor.active = false;
 });
 
