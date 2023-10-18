@@ -88,7 +88,8 @@ canvas.addEventListener("mousemove", (mouseData) => {
   if (cursor.active) {
     cursor.x = mouseData.offsetX;
     cursor.y = mouseData.offsetY;
-    const newLine = drawingLine[drawingLine.length - 1];
+    const lastIndexOfArrayIncrement = -1;
+    const newLine = drawingLine[drawingLine.length + lastIndexOfArrayIncrement];
     newLine.drag(cursor.x, cursor.y);
     canvas.dispatchEvent(redrawLines);
   }
