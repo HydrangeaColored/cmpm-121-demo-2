@@ -60,28 +60,52 @@ class CursorCommand {
     this.currPos = { x: currX, y: currY };
   }
   draw(context: CanvasRenderingContext2D) {
-    context.fillStyle = "#000000";
-    let cursorXCorrection = 0;
-    let cursorYCorrection = 0;
-    if (currentMarkerWidth == thinMarkerWidth) {
-      context.font = "16px monospace";
-      const cursorXAdjustment = -4;
-      const cursorYAdjustment = 8;
-      cursorXCorrection = cursorXAdjustment;
-      cursorYCorrection = cursorYAdjustment;
+    if (cursor.pen) {
+      context.fillStyle = "#000000";
+      let cursorXCorrection = 0;
+      let cursorYCorrection = 0;
+      if (currentMarkerWidth == thinMarkerWidth) {
+        context.font = "16px monospace";
+        const cursorXAdjustment = -4;
+        const cursorYAdjustment = 8;
+        cursorXCorrection = cursorXAdjustment;
+        cursorYCorrection = cursorYAdjustment;
+      } else {
+        context.font = "32px monospace";
+        const cursorXAdjustment = -8;
+        const cursorYAdjustment = 16;
+        cursorXCorrection = cursorXAdjustment;
+        cursorYCorrection = cursorYAdjustment;
+      }
+      context.fillText(
+        "*",
+        this.currPos.x + cursorXCorrection,
+        this.currPos.y + cursorYCorrection,
+      );
+      context.fillStyle = "#FFE5B4";
     } else {
       context.font = "32px monospace";
-      const cursorXAdjustment = -8;
-      const cursorYAdjustment = 16;
-      cursorXCorrection = cursorXAdjustment;
-      cursorYCorrection = cursorYAdjustment;
+      context.fillText(cursor.selectedSticker, this.currPos.x, this.currPos.y);
     }
-    context.fillText(
-      "*",
-      this.currPos.x + cursorXCorrection,
-      this.currPos.y + cursorYCorrection,
-    );
-    context.fillStyle = "#FFE5B4";
+  }
+}
+
+class StickerCommand {
+  canvasStickers: { x: number; y: number; sticker: string }[];
+  constructor(currX: number, currY: number, currSticker: string) {
+    this.canvasStickers = [{ x: currX, y: currY, sticker: currSticker }];
+  }
+  place(context: CanvasRenderingContext2D) {
+    for (const { x, y, sticker } of this.canvasStickers) {
+      context.font = "32px monospace";
+      context.fillText(sticker, x, y);
+      /*
+      context.fillText(
+        "*",
+        x,
+        y,
+      );*/
+    }
   }
 }
 
@@ -91,6 +115,8 @@ const cursor = {
   active: false,
   x: 0,
   y: 0,
+  pen: true,
+  selectedSticker: "🍕",
 };
 
 // redrawing lines event
@@ -105,6 +131,12 @@ canvas.addEventListener("tool-moved", () => {
   redrawCanvas();
 });
 
+// sticker event
+const stickerChange = new Event("tool-changed");
+canvas.addEventListener("tool-moved", () => {
+  redrawCanvas();
+});
+
 function redrawCanvas() {
   context.clearRect(canvasPosX, canvasPosY, canvas.width, canvas.height);
   context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
@@ -114,22 +146,34 @@ function redrawCanvas() {
   if (cursorChange) {
     cursorChange.draw(context);
   }
+  for (const currSticker of drawingStickers) {
+    currSticker.place(context);
+  }
 }
 
 let drawingLine: LineCommand[] = [];
 let undoneLines: LineCommand[] = [];
 let currentMarkerWidth = thinMarkerWidth;
 let cursorChange: CursorCommand | null = null;
+let drawingStickers: StickerCommand[] = [];
+// 1 is line, 2 is sticker
+let undoReminder: number[] = [];
+let redoReminder: number[] = [];
+let undoneStickers: StickerCommand[] = [];
 
 canvas.addEventListener("mousedown", (mouseData) => {
   // mouse is active and start point of new line
   cursor.active = true;
   cursor.x = mouseData.offsetX;
   cursor.y = mouseData.offsetY;
-  const newLine = new LineCommand(cursor.x, cursor.y, currentMarkerWidth);
-  drawingLine.push(newLine);
+  if (cursor.pen) {
+    const newLine = new LineCommand(cursor.x, cursor.y, currentMarkerWidth);
+    drawingLine.push(newLine);
+    canvas.dispatchEvent(redrawLines);
+  }
   undoneLines = [];
-  canvas.dispatchEvent(redrawLines);
+  undoneStickers = [];
+  redoReminder = [];
 });
 
 canvas.addEventListener("mousemove", (mouseData) => {
@@ -139,14 +183,32 @@ canvas.addEventListener("mousemove", (mouseData) => {
   if (cursor.active) {
     cursor.x = mouseData.offsetX;
     cursor.y = mouseData.offsetY;
-    const lastIndexOfArrayIncrement = -1;
-    const newLine = drawingLine[drawingLine.length + lastIndexOfArrayIncrement];
-    newLine.drag(cursor.x, cursor.y);
-    canvas.dispatchEvent(redrawLines);
+    if (cursor.pen) {
+      const lastIndexOfArrayIncrement = -1;
+      const newLine =
+        drawingLine[drawingLine.length + lastIndexOfArrayIncrement];
+      newLine.drag(cursor.x, cursor.y);
+
+      canvas.dispatchEvent(redrawLines);
+    }
   }
 });
 
-canvas.addEventListener("mouseup", () => {
+canvas.addEventListener("mouseup", (mouseData) => {
+  if (!cursor.pen) {
+    const newSticker = new StickerCommand(
+      mouseData.offsetX,
+      mouseData.offsetY,
+      cursor.selectedSticker,
+    );
+    drawingStickers.push(newSticker);
+    const lastStrokeSticker = 2;
+    undoReminder.push(lastStrokeSticker);
+    canvas.dispatchEvent(stickerChange);
+  } else {
+    const lastStrokePen = 1;
+    undoReminder.push(lastStrokePen);
+  }
   // cursor inactive
   cursor.active = false;
   canvas.dispatchEvent(redrawLines);
@@ -175,9 +237,13 @@ app.append(clearCanvas);
 clearCanvas.addEventListener("click", () => {
   // clear context and redraw background color
   drawingLine = [];
+  drawingStickers = [];
   canvas.dispatchEvent(redrawLines);
   context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
   undoneLines = [];
+  undoneStickers = [];
+  undoReminder = [];
+  redoReminder = [];
 });
 
 // undo button
@@ -186,8 +252,18 @@ undoCanvas.innerHTML = "undo";
 app.append(undoCanvas);
 undoCanvas.addEventListener("click", () => {
   // clear context and redraw background color
-  if (drawingLine.length) {
-    undoneLines.push(drawingLine.pop()!);
+  if (undoReminder.length) {
+    if (undoReminder[undoReminder.length - 1] == 1) {
+      if (drawingLine.length) {
+        undoneLines.push(drawingLine.pop()!);
+      }
+    } else if (undoReminder[undoReminder.length - 1] == 2) {
+      if (drawingStickers.length) {
+        undoneStickers.push(drawingStickers.pop()!);
+        canvas.dispatchEvent(stickerChange);
+      }
+    }
+    redoReminder.push(undoReminder.pop()!);
     canvas.dispatchEvent(redrawLines);
   }
 });
@@ -198,14 +274,23 @@ redoCanvas.innerHTML = "redo";
 app.append(redoCanvas);
 redoCanvas.addEventListener("click", () => {
   // clear context and redraw background color
-  if (undoneLines.length) {
-    drawingLine.push(undoneLines.pop()!);
+  if (redoReminder.length) {
+    if (redoReminder[redoReminder.length - 1] == 1) {
+      if (undoneLines.length) {
+        drawingLine.push(undoneLines.pop()!);
+      }
+    } else if (redoReminder[redoReminder.length - 1] == 2) {
+      if (undoneStickers.length) {
+        drawingStickers.push(undoneStickers.pop()!);
+      }
+    }
+    undoReminder.push(redoReminder.pop()!);
     canvas.dispatchEvent(redrawLines);
   }
 });
 
-const newDiv = document.createElement("div");
-app.append(newDiv);
+const markerDiv = document.createElement("div");
+app.append(markerDiv);
 
 // thin marker
 const thinMarker = document.createElement("button");
@@ -213,12 +298,47 @@ thinMarker.innerHTML = "thin";
 app.append(thinMarker);
 thinMarker.addEventListener("click", () => {
   currentMarkerWidth = thinMarkerWidth;
+  cursor.pen = true;
 });
 
-// thin marker
+// thick marker
 const thickMarker = document.createElement("button");
 thickMarker.innerHTML = "thick";
 app.append(thickMarker);
 thickMarker.addEventListener("click", () => {
   currentMarkerWidth = thickMarkerWidth;
+  cursor.pen = true;
+});
+
+const emojiDiv = document.createElement("div");
+app.append(emojiDiv);
+
+// pizza emoji
+const pizzaSticker = document.createElement("button");
+pizzaSticker.innerHTML = "🍕";
+app.append(pizzaSticker);
+pizzaSticker.addEventListener("click", () => {
+  canvas.dispatchEvent(stickerChange);
+  cursor.pen = false;
+  cursor.selectedSticker = "🍕";
+});
+
+// burger emoji
+const burgerSticker = document.createElement("button");
+burgerSticker.innerHTML = "🍔";
+app.append(burgerSticker);
+burgerSticker.addEventListener("click", () => {
+  canvas.dispatchEvent(stickerChange);
+  cursor.pen = false;
+  cursor.selectedSticker = "🍔";
+});
+
+// fries emoji
+const friesSticker = document.createElement("button");
+friesSticker.innerHTML = "🍟";
+app.append(friesSticker);
+friesSticker.addEventListener("click", () => {
+  canvas.dispatchEvent(stickerChange);
+  cursor.pen = false;
+  cursor.selectedSticker = "🍟";
 });
