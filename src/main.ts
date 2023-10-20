@@ -2,7 +2,7 @@ import "./style.css";
 
 const app: HTMLDivElement = document.querySelector("#app")!;
 
-const gameName = "Drawpad";
+const gameName = "🦇Halloween Drawpad🦇";
 
 document.title = gameName;
 
@@ -10,6 +10,7 @@ const header = document.createElement("h1");
 header.innerHTML = gameName;
 app.append(header);
 
+document.body.style.backgroundColor = "orange";
 // canvas creation
 const canvas = document.createElement("canvas");
 const canvasSize = 256;
@@ -60,9 +61,9 @@ class CursorCommand {
   }
   draw(context: CanvasRenderingContext2D) {
     context.fillStyle = "#000000";
+    let cursorXCorrection = 0;
+    let cursorYCorrection = 0;
     if (cursor.pen) {
-      let cursorXCorrection = 0;
-      let cursorYCorrection = 0;
       if (currentMarkerWidth == thinMarkerWidth) {
         context.font = "16px monospace";
         const cursorXAdjustment = -4;
@@ -82,8 +83,16 @@ class CursorCommand {
         this.currPos.y + cursorYCorrection,
       );
     } else {
-      context.font = "32px monospace";
-      context.fillText(cursor.selectedSticker, this.currPos.x, this.currPos.y);
+      context.font = "24px monospace";
+      const cursorXAdjustment = -14;
+      const cursorYAdjustment = 10;
+      cursorXCorrection = cursorXAdjustment;
+      cursorYCorrection = cursorYAdjustment;
+      context.fillText(
+        cursor.selectedSticker,
+        this.currPos.x + cursorXCorrection,
+        this.currPos.y + cursorYCorrection,
+      );
     }
     context.fillStyle = "#FFE5B4";
   }
@@ -96,7 +105,7 @@ class StickerCommand {
   }
   place(context: CanvasRenderingContext2D) {
     for (const { x, y, sticker } of this.canvasStickers) {
-      context.font = "32px monospace";
+      context.font = "24px monospace";
       context.fillStyle = "#000000";
       context.fillText(sticker, x, y);
       context.fillStyle = "#FFE5B4";
@@ -190,9 +199,11 @@ canvas.addEventListener("mousemove", (mouseData) => {
 
 canvas.addEventListener("mouseup", (mouseData) => {
   if (!cursor.pen) {
+    const cursorXAdjustment = -14;
+    const cursorYAdjustment = 10;
     const newSticker = new StickerCommand(
-      mouseData.offsetX,
-      mouseData.offsetY,
+      mouseData.offsetX + cursorXAdjustment,
+      mouseData.offsetY + cursorYAdjustment,
       cursor.selectedSticker,
     );
     drawingStickers.push(newSticker);
@@ -227,6 +238,7 @@ app.append(div);
 // clear button
 const clearCanvas = document.createElement("button");
 clearCanvas.innerHTML = "clear";
+clearCanvas.style.backgroundColor = "purple";
 app.append(clearCanvas);
 clearCanvas.addEventListener("click", () => {
   // clear context and redraw background color
@@ -243,6 +255,7 @@ clearCanvas.addEventListener("click", () => {
 // undo button
 const undoCanvas = document.createElement("button");
 undoCanvas.innerHTML = "undo";
+undoCanvas.style.backgroundColor = "purple";
 app.append(undoCanvas);
 undoCanvas.addEventListener("click", () => {
   // clear context and redraw background color
@@ -273,6 +286,7 @@ undoCanvas.addEventListener("click", () => {
 // redo button
 const redoCanvas = document.createElement("button");
 redoCanvas.innerHTML = "redo";
+redoCanvas.style.backgroundColor = "purple";
 app.append(redoCanvas);
 redoCanvas.addEventListener("click", () => {
   // clear context and redraw background color
@@ -305,6 +319,7 @@ app.append(markerDiv);
 // thin marker
 const thinMarker = document.createElement("button");
 thinMarker.innerHTML = "thin";
+thinMarker.style.backgroundColor = "red";
 app.append(thinMarker);
 thinMarker.addEventListener("click", () => {
   currentMarkerWidth = thinMarkerWidth;
@@ -314,6 +329,7 @@ thinMarker.addEventListener("click", () => {
 // thick marker
 const thickMarker = document.createElement("button");
 thickMarker.innerHTML = "thick";
+thickMarker.style.backgroundColor = "red";
 app.append(thickMarker);
 thickMarker.addEventListener("click", () => {
   currentMarkerWidth = thickMarkerWidth;
@@ -324,41 +340,46 @@ const emojiDiv = document.createElement("div");
 app.append(emojiDiv);
 
 // pizza emoji
-const pizzaSticker = document.createElement("button");
-pizzaSticker.innerHTML = "🍕";
-app.append(pizzaSticker);
-pizzaSticker.addEventListener("click", () => {
+const lanternSticker = document.createElement("button");
+lanternSticker.innerHTML = "🎃";
+lanternSticker.style.backgroundColor = "black";
+app.append(lanternSticker);
+lanternSticker.addEventListener("click", () => {
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
-  cursor.selectedSticker = "🍕";
+  cursor.selectedSticker = "🎃";
 });
 
 // burger emoji
-const burgerSticker = document.createElement("button");
-burgerSticker.innerHTML = "🍔";
-app.append(burgerSticker);
-burgerSticker.addEventListener("click", () => {
+const ghostSticker = document.createElement("button");
+ghostSticker.innerHTML = "👻";
+ghostSticker.style.backgroundColor = "black";
+app.append(ghostSticker);
+ghostSticker.addEventListener("click", () => {
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
-  cursor.selectedSticker = "🍔";
+  cursor.selectedSticker = "👻";
 });
 
 // fries emoji
-const friesSticker = document.createElement("button");
-friesSticker.innerHTML = "🍟";
-app.append(friesSticker);
-friesSticker.addEventListener("click", () => {
+const webSticker = document.createElement("button");
+webSticker.innerHTML = "🕸️";
+webSticker.style.backgroundColor = "black";
+app.append(webSticker);
+webSticker.addEventListener("click", () => {
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
-  cursor.selectedSticker = "🍟";
+  cursor.selectedSticker = "🕸️";
 });
 
 // custom emoji
 const customSticker = document.createElement("button");
 customSticker.innerHTML = "Custom";
+customSticker.style.color = "white";
+customSticker.style.backgroundColor = "black";
 app.append(customSticker);
 customSticker.addEventListener("click", () => {
-  customStickerText = prompt("Custom Sticker text", "🍿");
+  customStickerText = prompt("Custom Sticker text", "💀");
   customSticker.innerHTML = customStickerText!;
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
