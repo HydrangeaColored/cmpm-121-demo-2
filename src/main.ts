@@ -26,6 +26,7 @@ app.append(canvas);
 const thinMarkerWidth = 1;
 const thickMarkerWidth = 5;
 canvas.style.cursor = "none";
+let customStickerText: string | null = "";
 
 // geo info objs
 class LineCommand {
@@ -60,8 +61,8 @@ class CursorCommand {
     this.currPos = { x: currX, y: currY };
   }
   draw(context: CanvasRenderingContext2D) {
+    context.fillStyle = "#000000";
     if (cursor.pen) {
-      context.fillStyle = "#000000";
       let cursorXCorrection = 0;
       let cursorYCorrection = 0;
       if (currentMarkerWidth == thinMarkerWidth) {
@@ -82,11 +83,11 @@ class CursorCommand {
         this.currPos.x + cursorXCorrection,
         this.currPos.y + cursorYCorrection,
       );
-      context.fillStyle = "#FFE5B4";
     } else {
       context.font = "32px monospace";
       context.fillText(cursor.selectedSticker, this.currPos.x, this.currPos.y);
     }
+    context.fillStyle = "#FFE5B4";
   }
 }
 
@@ -98,13 +99,9 @@ class StickerCommand {
   place(context: CanvasRenderingContext2D) {
     for (const { x, y, sticker } of this.canvasStickers) {
       context.font = "32px monospace";
+      context.fillStyle = "#000000";
       context.fillText(sticker, x, y);
-      /*
-      context.fillText(
-        "*",
-        x,
-        y,
-      );*/
+      context.fillStyle = "#FFE5B4";
     }
   }
 }
@@ -256,11 +253,16 @@ undoCanvas.addEventListener("click", () => {
     const finalElementArrayIncrement = 1;
     const isLine = 1;
     const isSticker = 2;
-    if (undoReminder[undoReminder.length - finalElementArrayIncrement] == isLine) {
+    if (
+      undoReminder[undoReminder.length - finalElementArrayIncrement] == isLine
+    ) {
       if (drawingLine.length) {
         undoneLines.push(drawingLine.pop()!);
       }
-    } else if (undoReminder[undoReminder.length - finalElementArrayIncrement] == isSticker) {
+    } else if (
+      undoReminder[undoReminder.length - finalElementArrayIncrement] ==
+      isSticker
+    ) {
       if (drawingStickers.length) {
         undoneStickers.push(drawingStickers.pop()!);
         canvas.dispatchEvent(stickerChange);
@@ -281,11 +283,16 @@ redoCanvas.addEventListener("click", () => {
     const finalElementArrayIncrement = 1;
     const isLine = 1;
     const isSticker = 2;
-    if (redoReminder[redoReminder.length - finalElementArrayIncrement] == isLine) {
+    if (
+      redoReminder[redoReminder.length - finalElementArrayIncrement] == isLine
+    ) {
       if (undoneLines.length) {
         drawingLine.push(undoneLines.pop()!);
       }
-    } else if (redoReminder[redoReminder.length - finalElementArrayIncrement] == isSticker) {
+    } else if (
+      redoReminder[redoReminder.length - finalElementArrayIncrement] ==
+      isSticker
+    ) {
       if (undoneStickers.length) {
         drawingStickers.push(undoneStickers.pop()!);
       }
@@ -347,4 +354,16 @@ friesSticker.addEventListener("click", () => {
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
   cursor.selectedSticker = "🍟";
+});
+
+// custom emoji
+const customSticker = document.createElement("button");
+customSticker.innerHTML = "Custom";
+app.append(customSticker);
+customSticker.addEventListener("click", () => {
+  customStickerText = prompt("Custom Sticker text", "🍿");
+  customSticker.innerHTML = customStickerText!;
+  canvas.dispatchEvent(stickerChange);
+  cursor.pen = false;
+  cursor.selectedSticker = customStickerText!;
 });
