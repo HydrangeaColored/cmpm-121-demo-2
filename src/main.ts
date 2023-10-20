@@ -25,22 +25,31 @@ app.append(canvas);
 const thinMarkerWidth = 1;
 const thickMarkerWidth = 5;
 canvas.style.cursor = "none";
-let customStickerText: string | null = "";
+const colorChoice = ["red", "blue", "yellow", "green", "white", "black"];
+const colorSize = 5;
 
 // geo info objs
 class LineCommand {
   pointsInLine: { x: number; y: number }[];
   currMarkerWidth: number;
+  currColor: number;
 
-  constructor(currX: number, currY: number, currMarkerWidth: number) {
+  constructor(
+    currX: number,
+    currY: number,
+    currMarkerWidth: number,
+    currColor: number,
+  ) {
     this.pointsInLine = [{ x: currX, y: currY }];
     this.currMarkerWidth = currMarkerWidth;
+    this.currColor = currColor;
   }
 
   display(context: CanvasRenderingContext2D) {
     context.lineWidth = this.currMarkerWidth;
     const firstIndex = 0;
     const { x, y } = this.pointsInLine[firstIndex];
+    context.strokeStyle = colorChoice[this.currColor];
     context.beginPath();
     context.moveTo(x, y);
     for (const { x, y } of this.pointsInLine) {
@@ -60,7 +69,7 @@ class CursorCommand {
     this.currPos = { x: currX, y: currY };
   }
   draw(context: CanvasRenderingContext2D) {
-    context.fillStyle = "#000000";
+    context.fillStyle = colorChoice[cursor.selectedColor];
     let cursorXCorrection = 0;
     let cursorYCorrection = 0;
     if (cursor.pen) {
@@ -77,6 +86,7 @@ class CursorCommand {
         cursorXCorrection = cursorXAdjustment;
         cursorYCorrection = cursorYAdjustment;
       }
+
       context.fillText(
         "*",
         this.currPos.x + cursorXCorrection,
@@ -100,13 +110,20 @@ class CursorCommand {
 
 class StickerCommand {
   canvasStickers: { x: number; y: number; sticker: string }[];
-  constructor(currX: number, currY: number, currSticker: string) {
+  currColor: number;
+  constructor(
+    currX: number,
+    currY: number,
+    currSticker: string,
+    currColor: number,
+  ) {
     this.canvasStickers = [{ x: currX, y: currY, sticker: currSticker }];
+    this.currColor = currColor;
   }
   place(context: CanvasRenderingContext2D) {
     for (const { x, y, sticker } of this.canvasStickers) {
       context.font = "24px monospace";
-      context.fillStyle = "#000000";
+      context.fillStyle = colorChoice[this.currColor];
       context.fillText(sticker, x, y);
       context.fillStyle = "#FFE5B4";
     }
@@ -121,6 +138,7 @@ const cursor = {
   y: 0,
   pen: true,
   selectedSticker: "🍕",
+  selectedColor: 0,
 };
 
 // redrawing lines event
@@ -171,7 +189,12 @@ canvas.addEventListener("mousedown", (mouseData) => {
   cursor.x = mouseData.offsetX;
   cursor.y = mouseData.offsetY;
   if (cursor.pen) {
-    const newLine = new LineCommand(cursor.x, cursor.y, currentMarkerWidth);
+    const newLine = new LineCommand(
+      cursor.x,
+      cursor.y,
+      currentMarkerWidth,
+      cursor.selectedColor,
+    );
     drawingLine.push(newLine);
     canvas.dispatchEvent(redrawLines);
   }
@@ -205,6 +228,7 @@ canvas.addEventListener("mouseup", (mouseData) => {
       mouseData.offsetX + cursorXAdjustment,
       mouseData.offsetY + cursorYAdjustment,
       cursor.selectedSticker,
+      cursor.selectedColor,
     );
     drawingStickers.push(newSticker);
     const lastStrokeSticker = 2;
@@ -322,6 +346,7 @@ thinMarker.innerHTML = "thin";
 thinMarker.style.backgroundColor = "red";
 app.append(thinMarker);
 thinMarker.addEventListener("click", () => {
+  cursor.selectedColor = Math.floor(colorSize * Math.random());
   currentMarkerWidth = thinMarkerWidth;
   cursor.pen = true;
 });
@@ -332,6 +357,7 @@ thickMarker.innerHTML = "thick";
 thickMarker.style.backgroundColor = "red";
 app.append(thickMarker);
 thickMarker.addEventListener("click", () => {
+  cursor.selectedColor = Math.floor(colorSize * Math.random());
   currentMarkerWidth = thickMarkerWidth;
   cursor.pen = true;
 });
@@ -345,6 +371,7 @@ lanternSticker.innerHTML = "🎃";
 lanternSticker.style.backgroundColor = "black";
 app.append(lanternSticker);
 lanternSticker.addEventListener("click", () => {
+  cursor.selectedColor = Math.floor(colorSize * Math.random());
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
   cursor.selectedSticker = "🎃";
@@ -356,6 +383,7 @@ ghostSticker.innerHTML = "👻";
 ghostSticker.style.backgroundColor = "black";
 app.append(ghostSticker);
 ghostSticker.addEventListener("click", () => {
+  cursor.selectedColor = Math.floor(colorSize * Math.random());
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
   cursor.selectedSticker = "👻";
@@ -367,18 +395,21 @@ webSticker.innerHTML = "🕸️";
 webSticker.style.backgroundColor = "black";
 app.append(webSticker);
 webSticker.addEventListener("click", () => {
+  cursor.selectedColor = Math.floor(colorSize * Math.random());
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
   cursor.selectedSticker = "🕸️";
 });
 
 // custom emoji
+let customStickerText: string | null = "";
 const customSticker = document.createElement("button");
 customSticker.innerHTML = "Custom";
 customSticker.style.color = "white";
 customSticker.style.backgroundColor = "black";
 app.append(customSticker);
 customSticker.addEventListener("click", () => {
+  cursor.selectedColor = Math.floor(colorSize * Math.random());
   customStickerText = prompt("Custom Sticker text", "💀");
   customSticker.innerHTML = customStickerText!;
   canvas.dispatchEvent(stickerChange);
