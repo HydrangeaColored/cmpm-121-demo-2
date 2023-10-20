@@ -12,16 +12,14 @@ app.append(header);
 
 // canvas creation
 const canvas = document.createElement("canvas");
-const canvasHeight = 256;
-const canvasWidth = 256;
-canvas.height = canvasHeight;
-canvas.width = canvasWidth;
+const canvasSize = 256;
+canvas.height = canvasSize;
+canvas.width = canvasSize;
 canvas.id = "canvas";
 const context = canvas.getContext("2d")!;
 context.fillStyle = "#FFE5B4";
-const canvasPosX = 0;
-const canvasPosY = 0;
-context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
+const canvasPos = 0;
+context.fillRect(canvasPos, canvasPos, canvas.height, canvas.width);
 app.append(canvas);
 const thinMarkerWidth = 1;
 const thickMarkerWidth = 5;
@@ -119,24 +117,24 @@ const cursor = {
 // redrawing lines event
 const redrawLines = new Event("drawing-changed");
 canvas.addEventListener("drawing-changed", () => {
-  redrawCanvas();
+  redrawCanvas(context);
 });
 
 // cursor event
 const mouseChange = new Event("tool-moved");
 canvas.addEventListener("tool-moved", () => {
-  redrawCanvas();
+  redrawCanvas(context);
 });
 
 // sticker event
 const stickerChange = new Event("tool-changed");
 canvas.addEventListener("tool-moved", () => {
-  redrawCanvas();
+  redrawCanvas(context);
 });
 
-function redrawCanvas() {
-  context.clearRect(canvasPosX, canvasPosY, canvas.width, canvas.height);
-  context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
+function redrawCanvas(context: CanvasRenderingContext2D) {
+  context.clearRect(canvasPos, canvasPos, canvas.width, canvas.height);
+  context.fillRect(canvasPos, canvasPos, canvas.height, canvas.width);
   for (const currLine of drawingLine) {
     currLine.display(context);
   }
@@ -185,7 +183,6 @@ canvas.addEventListener("mousemove", (mouseData) => {
       const newLine =
         drawingLine[drawingLine.length + lastIndexOfArrayIncrement];
       newLine.drag(cursor.x, cursor.y);
-
       canvas.dispatchEvent(redrawLines);
     }
   }
@@ -236,7 +233,7 @@ clearCanvas.addEventListener("click", () => {
   drawingLine = [];
   drawingStickers = [];
   canvas.dispatchEvent(redrawLines);
-  context.fillRect(canvasPosX, canvasPosY, canvas.height, canvas.width);
+  context.fillRect(canvasPos, canvasPos, canvas.height, canvas.width);
   undoneLines = [];
   undoneStickers = [];
   undoReminder = [];
@@ -366,4 +363,29 @@ customSticker.addEventListener("click", () => {
   canvas.dispatchEvent(stickerChange);
   cursor.pen = false;
   cursor.selectedSticker = customStickerText!;
+});
+
+const exportDiv = document.createElement("div");
+app.append(exportDiv);
+
+// export button
+const exportButton = document.createElement("button");
+exportButton.innerHTML = "Export";
+app.append(exportButton);
+exportButton.addEventListener("click", () => {
+  const tempCanvas = document.createElement("canvas");
+  const tempCanvasSize = 1024;
+  tempCanvas.height = tempCanvasSize;
+  tempCanvas.width = tempCanvasSize;
+  const tempContext = tempCanvas.getContext("2d")!;
+  const scaleSize = 4;
+  tempContext.scale(scaleSize, scaleSize);
+  tempContext.fillStyle = "#FFE5B4";
+  context.fillRect(canvasPos, canvasPos, tempCanvas.height, tempCanvas.width);
+  redrawCanvas(tempContext);
+  const anchor = document.createElement("a");
+  anchor.href = tempCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
+  canvas.dispatchEvent(redrawLines);
 });
